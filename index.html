@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9-Place Cube Roller</title>
+<style>
+  :root {
+    --bg: #1b1e27;
+    --panel: #262a36;
+    --slot-empty: #000000;
+    --slot-border: #3a3f4f;
+    --center-glow: #ffd76688;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: radial-gradient(circle at 50% 20%, #2b3040, var(--bg) 70%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #e8e9ee;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #cfd3e0;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(9, 72px);
+    grid-template-rows: 72px;
+    gap: 10px;
+    padding: 20px;
+    background: var(--panel);
+    border-radius: 18px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+    max-width: 95vw;
+    overflow-x: auto;
+  }
+
+  .place {
+    position: relative;
+    border-radius: 14px;
+    background: var(--slot-empty);
+    border: 2px dashed var(--slot-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  }
+
+  .place.center {
+    border-style: solid;
+    border-color: var(--center-glow);
+    box-shadow: 0 0 0 3px rgba(255, 215, 102, 0.15);
+  }
+
+  .place .index {
+    position: absolute;
+    top: 4px;
+    left: 7px;
+    font-size: 0.65rem;
+    color: #5b6070;
+    font-weight: 600;
+  }
+
+  .place.center .index { color: #d8b45f; }
+
+  .cube {
+    width: 66%;
+    height: 66%;
+    border-radius: 10px;
+    animation: pop 0.28s ease;
+  }
+
+  @keyframes pop {
+    from { transform: scale(0.4); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .cube.R {
+    background: linear-gradient(145deg, #ff8a80, #d32f2f);
+    box-shadow: inset 0 3px 4px rgba(255,255,255,0.45),
+                inset 0 -6px 8px rgba(0,0,0,0.35),
+                0 6px 10px rgba(211,47,47,0.35);
+  }
+  .cube.G {
+    background: linear-gradient(145deg, #a5f3a0, #2e7d32);
+    box-shadow: inset 0 3px 4px rgba(255,255,255,0.45),
+                inset 0 -6px 8px rgba(0,0,0,0.35),
+                0 6px 10px rgba(46,125,50,0.35);
+  }
+  .cube.B {
+    background: linear-gradient(145deg, #90c8ff, #1565c0);
+    box-shadow: inset 0 3px 4px rgba(255,255,255,0.45),
+                inset 0 -6px 8px rgba(0,0,0,0.35),
+                0 6px 10px rgba(21,101,192,0.35);
+  }
+  .cube.Y {
+    background: linear-gradient(145deg, #fff2a0, #f9a825);
+    box-shadow: inset 0 3px 4px rgba(255,255,255,0.5),
+                inset 0 -6px 8px rgba(0,0,0,0.3),
+                0 6px 10px rgba(249,168,37,0.35);
+  }
+
+  button#roll {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1b1e27;
+    background: linear-gradient(145deg, #ffe17d, #f4b93f);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(244, 185, 63, 0.35), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  button#roll:hover { transform: translateY(-2px); box-shadow: 0 12px 20px rgba(244, 185, 63, 0.45); }
+  button#roll:active { transform: translateY(0); box-shadow: 0 6px 10px rgba(244, 185, 63, 0.3); }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    font-size: 0.8rem;
+    color: #9ba0b0;
+  }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .swatch.R { background: #d32f2f; }
+  .swatch.G { background: #2e7d32; }
+  .swatch.B { background: #1565c0; }
+  .swatch.Y { background: #f9a825; }
+</style>
+</head>
+<body>
+
+  <h1>9-Place Cube Roller</h1>
+
+  <div class="board" id="board"></div>
+
+  <button id="roll">Roll</button>
+
+  <div class="legend">
+    <span><i class="swatch R"></i>Red</span>
+    <span><i class="swatch G"></i>Green</span>
+    <span><i class="swatch B"></i>Blue</span>
+    <span><i class="swatch Y"></i>Yellow</span>
+  </div>
+
+<script>
+  const COLORS = ['R', 'G', 'B', 'Y'];
+  const CENTER_INDEX = 4; // 0-based index of place 5 in a 3x3 grid
+  const board = document.getElementById('board');
+
+  const places = [];
+  for (let i = 0; i < 9; i++) {
+    const place = document.createElement('div');
+    place.className = 'place' + (i === CENTER_INDEX ? ' center' : '');
+
+    const label = document.createElement('span');
+    label.className = 'index';
+    label.textContent = i + 1;
+    place.appendChild(label);
+
+    board.appendChild(place);
+    places.push(place);
+  }
+
+  function shuffled(arr) {
+    const copy = arr.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function pickFilledIndices() {
+    const others = shuffled([0, 1, 2, 3, 5, 6, 7, 8]);
+    return [CENTER_INDEX, ...others.slice(0, 3)];
+  }
+
+  function roll() {
+    const filledIndices = pickFilledIndices();
+    const colors = shuffled(COLORS);
+    places.forEach((place) => {
+      const existingCube = place.querySelector('.cube');
+      if (existingCube) existingCube.remove();
+    });
+
+    filledIndices.forEach((placeIndex, k) => {
+      const place = places[placeIndex];
+      if (place) {
+        const cube = document.createElement('div');
+        cube.className = 'cube ' + colors[k];
+        place.appendChild(cube);
+      }
+    });
+  }
+
+  document.getElementById('roll').addEventListener('click', roll);
+</script>
+
+</body>
+</html>
